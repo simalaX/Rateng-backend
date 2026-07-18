@@ -11,7 +11,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # --- Database -----------------------------------------------------
-    DATABASE_URL: str = "postgresql://postgres:Timex88@localhost:5432/rateng"
+    DATABASE_URL: str = "postgresql://postgres:Timex88@localhost:5432/Rateng"
 
     # --- Auth / JWT -----------------------------------------------------
     JWT_SECRET_KEY: str = "c47a9c17d8e040909592ec8aa0fd48f9"
@@ -25,12 +25,12 @@ class Settings(BaseSettings):
 
     # --- Default admin, used only to seed the first login ---------------
     ADMIN_EMAIL: str = "admin@ratengconstruction.com"
-    ADMIN_PASSWORD: str = "ChangeMe123!"
+    ADMIN_PASSWORD: str = ""
 
     # --- CORS -------------------------------------------------------------
     # Comma-separated list of origins allowed to call this API, e.g.
     # "https://rateng-frontend.onrender.com,http://localhost:3000"
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,https://ratengconstructioninteriors.co.ke"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -45,9 +45,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.split()]
 
 
 settings = Settings()
-print(f"DEBUG: DATABASE_URL = {repr(settings.DATABASE_URL)}")
-print(f"DEBUG: sqlalchemy_database_url = {repr(settings.sqlalchemy_database_url)}")
