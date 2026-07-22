@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
+from sqlalchemy import text, inspect
 
 from .config import settings
 from .database import Base, engine
@@ -12,8 +12,14 @@ from . import security
 
 
 def fix_admin():
-    """Ensure admin account exists in database."""
+    """Ensure admin account exists in database (after tables are created)."""
     try:
+        # Wait for admin table to exist
+        inspector = inspect(engine)
+        if "admin" not in inspector.get_table_names():
+            print("⚠ Admin table not found, skipping admin creation")
+            return
+
         with engine.connect() as conn:
             # Check if admin exists
             result = conn.execute(
@@ -28,6 +34,8 @@ def fix_admin():
                 )
                 conn.commit()
                 print(f"✓ Admin account created: {settings.ADMIN_EMAIL}")
+            else:
+                print(f"✓ Admin account already exists: {settings.ADMIN_EMAIL}")
     except Exception as e:
         print(f"⚠ Admin creation error: {e}")
 
@@ -35,8 +43,8 @@ def fix_admin():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
-    fix_admin()
     seed_data()
+    fix_admin()
     yield
 
 
