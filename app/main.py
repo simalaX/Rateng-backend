@@ -2,16 +2,40 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from .config import settings
 from .database import Base, engine
 from .routers import auth, gallery, inquiries, testimonials, videos
 from .seed import seed_data
+from . import security
+
+
+def fix_admin():
+    """Ensure admin account exists in database."""
+    try:
+        with engine.connect() as conn:
+            # Check if admin exists
+            result = conn.execute(
+                text("SELECT * FROM admin WHERE email = :email"),
+                {"email": settings.ADMIN_EMAIL}
+            )
+            if not result.fetchone():
+                hashed = security.hash_password(settings.ADMIN_PASSWORD)
+                conn.execute(
+                    text("INSERT INTO admin (email, hashed_password) VALUES (:email, :hashed)"),
+                    {"email": settings.ADMIN_EMAIL, "hashed": hashed}
+                )
+                conn.commit()
+                print(f"✓ Admin account created: {settings.ADMIN_EMAIL}")
+    except Exception as e:
+        print(f"⚠ Admin creation error: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    fix_admin()
     seed_data()
     yield
 
