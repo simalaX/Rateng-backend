@@ -24,12 +24,12 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str = "wgT3X2kkqBE4djU_C0yuxo0Z1Ws"
 
     # --- Default admin, used only to seed the first login ---------------
+    # Both values must be set in .env file (no defaults for security)
     ADMIN_EMAIL: str = "admin@ratengconstruction.com"
-    ADMIN_PASSWORD: str = ""
+    ADMIN_PASSWORD: str  "ChangeMe123!"
 
     # --- CORS -------------------------------------------------------------
-    # Comma-separated list of origins allowed to call this API, e.g.
-    # "https://rateng-frontend.onrender.com,http://localhost:3000"
+    # Comma-separated list of origins allowed to call this API
     CORS_ORIGINS: str = "http://localhost:3000,https://ratengconstructioninteriors.co.ke"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.split()]
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
 
 
 settings = Settings()
