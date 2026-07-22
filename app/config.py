@@ -30,7 +30,7 @@ class Settings(BaseSettings):
 
     # --- CORS -------------------------------------------------------------
     # Comma-separated list of origins allowed to call this API
-    CORS_ORIGINS: str = "http://localhost:3000,https://ratengconstructioninteriors.co.ke"
+    CORS_ORIGINS: str = "http://localhost:3000,https://ratengconstructioninteriors.co.ke,https://rateng-frontend.onrender.com"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
