@@ -8,7 +8,7 @@ from .config import settings
 from .database import Base, engine
 from .routers import auth, gallery, inquiries, testimonials, videos
 from .seed import seed_data
-from . import security
+from . import security, models
 
 
 def fix_admin():
@@ -16,20 +16,20 @@ def fix_admin():
     try:
         # Wait for admin table to exist
         inspector = inspect(engine)
-        if "admin" not in inspector.get_table_names():
+        if "admins" not in inspector.get_table_names():
             print("⚠ Admin table not found, skipping admin creation")
             return
 
         with engine.connect() as conn:
             # Check if admin exists
             result = conn.execute(
-                text("SELECT * FROM admin WHERE email = :email"),
+                text("SELECT * FROM admins WHERE email = :email"),
                 {"email": settings.ADMIN_EMAIL}
             )
             if not result.fetchone():
                 hashed = security.hash_password(settings.ADMIN_PASSWORD)
                 conn.execute(
-                    text("INSERT INTO admin (email, hashed_password) VALUES (:email, :hashed)"),
+                    text("INSERT INTO admins (email, hashed_password) VALUES (:email, :hashed)"),
                     {"email": settings.ADMIN_EMAIL, "hashed": hashed}
                 )
                 conn.commit()
