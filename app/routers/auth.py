@@ -10,14 +10,36 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 @router.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    admin = db.query(models.Admin).filter(models.Admin.email == form_data.username).first()
-    if not admin or not security.verify_password(form_data.password, admin.hashed_password):
+    try:
+        print(f"[LOGIN] Attempting login with email: {form_data.username}")
+        admin = db.query(models.Admin).filter(models.Admin.email == form_data.username).first()
+
+        if not admin:
+            print(f"[LOGIN] Admin not found: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
+
+        if not security.verify_password(form_data.password, admin.hashed_password):
+            print(f"[LOGIN] Invalid password for: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
+
+        print(f"[LOGIN] ✓ Login successful for: {form_data.username}")
+        token = security.create_access_token({"sub": str(admin.id)})
+        return {"access_token": token, "token_type": "bearer"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[LOGIN] ✗ Unexpected error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect email or password",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Login failed",
         )
-    token = security.create_access_token({"sub": str(admin.id)})
-    return {"access_token": token, "token_type": "bearer"}
 
 
 @router.get("/me", response_model=schemas.AdminOut)
@@ -34,5 +56,6 @@ def change_password(
     if not security.verify_password(payload.current_password, current_admin.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     current_admin.hashed_password = security.hash_password(payload.new_password)
+    db.add(current_admin)
     db.commit()
     return {"detail": "Password updated successfully"}
