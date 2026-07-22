@@ -42,9 +42,20 @@ def fix_admin():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
+    print("[STARTUP] Creating database tables...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("[STARTUP] ✓ Tables created")
+    except Exception as e:
+        print(f"[STARTUP] ✗ Failed to create tables: {e}")
+
+    print("[STARTUP] Seeding data...")
     seed_data()
+
+    print("[STARTUP] Fixing admin...")
     fix_admin()
+
+    print("[STARTUP] ✓ Startup complete")
     yield
 
 
