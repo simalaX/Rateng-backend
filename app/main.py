@@ -12,7 +12,7 @@ from . import security, models
 
 
 def fix_admin():
-    """Ensure admin account exists in database (after tables are created)."""
+    """Ensure admin account exists with correct password."""
     try:
         # Wait for admin table to exist
         inspector = inspect(engine)
@@ -21,23 +21,34 @@ def fix_admin():
             return
 
         with engine.connect() as conn:
+            admin_email = settings.ADMIN_EMAIL
+            hashed = security.hash_password(settings.ADMIN_PASSWORD)
+
             # Check if admin exists
             result = conn.execute(
-                text("SELECT * FROM admins WHERE email = :email"),
-                {"email": settings.ADMIN_EMAIL}
+                text("SELECT id FROM admins WHERE email = :email"),
+                {"email": admin_email}
             )
-            if not result.fetchone():
-                hashed = security.hash_password(settings.ADMIN_PASSWORD)
+            admin = result.fetchone()
+
+            if admin:
+                # Update password
                 conn.execute(
-                    text("INSERT INTO admins (email, hashed_password) VALUES (:email, :hashed)"),
-                    {"email": settings.ADMIN_EMAIL, "hashed": hashed}
+                    text("UPDATE admins SET hashed_password = :hashed WHERE email = :email"),
+                    {"email": admin_email, "hashed": hashed}
                 )
                 conn.commit()
-                print(f"✓ Admin account created: {settings.ADMIN_EMAIL}")
+                print(f"✓ Admin password updated: {admin_email}")
             else:
-                print(f"✓ Admin account already exists: {settings.ADMIN_EMAIL}")
+                # Create new admin
+                conn.execute(
+                    text("INSERT INTO admins (email, hashed_password) VALUES (:email, :hashed)"),
+                    {"email": admin_email, "hashed": hashed}
+                )
+                conn.commit()
+                print(f"✓ Admin account created: {admin_email}")
     except Exception as e:
-        print(f"⚠ Admin creation error: {e}")
+        print(f"⚠ Admin error: {e}")
 
 
 @asynccontextmanager
