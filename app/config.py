@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # --- Default admin, used only to seed the first login ---------------
     # Both values must be set in .env file (no defaults for security)
     ADMIN_EMAIL: str = "admin@ratengconstruction.com"
-    ADMIN_PASSWORD: str  "ChangeMe123!"
+    ADMIN_PASSWORD: str = "ChangeMe123!"
 
     # --- CORS -------------------------------------------------------------
     # Comma-separated list of origins allowed to call this API
